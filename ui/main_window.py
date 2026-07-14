@@ -10,10 +10,11 @@ from PySide6.QtWidgets import (
 )
 
 from monitor.system_info import SystemInfo
+from ui.history_graph import HistoryGraphCard
 
 
 class MainWindow(QMainWindow):
-    """System Monitorのメイン画面。"""
+    """PulseDeskのメイン画面。"""
 
     UPDATE_INTERVAL_MS = 1000
 
@@ -22,9 +23,9 @@ class MainWindow(QMainWindow):
 
         self.system_info = SystemInfo()
 
-        self.setWindowTitle("System Monitor")
-        self.resize(420, 620)
-        self.setMinimumSize(380, 560)
+        self.setWindowTitle("PulseDesk")
+        self.resize(440, 820)
+        self.setMinimumSize(400, 700)
 
         self._apply_style()
         self._build_ui()
@@ -37,11 +38,11 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(14)
 
-        title = QLabel("System Monitor")
+        title = QLabel("PulseDesk")
         title.setObjectName("title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        subtitle = QLabel("Realtime PC Status")
+        subtitle = QLabel("Your PC, at a glance")
         subtitle.setObjectName("subtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -64,6 +65,8 @@ class MainWindow(QMainWindow):
 
         self.network_value, network_card = self._create_network_card()
 
+        self.history_graph = HistoryGraphCard()
+
         main_layout.addWidget(title)
         main_layout.addWidget(subtitle)
         main_layout.addSpacing(8)
@@ -71,6 +74,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(memory_card)
         main_layout.addWidget(disk_card)
         main_layout.addWidget(network_card)
+        main_layout.addWidget(self.history_graph)
         main_layout.addStretch()
 
         self.setCentralWidget(central_widget)
@@ -173,6 +177,11 @@ class MainWindow(QMainWindow):
             f"↓ {download_speed:.2f} MB/s"
         )
 
+        self.history_graph.update_values(
+            cpu_usage,
+            memory_usage,
+        )
+
     def _apply_style(self) -> None:
         self.setStyleSheet(
             """
@@ -184,7 +193,7 @@ class MainWindow(QMainWindow):
             }
 
             QLabel#title {
-                font-size: 26px;
+                font-size: 28px;
                 font-weight: 700;
             }
 
