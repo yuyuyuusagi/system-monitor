@@ -40,13 +40,18 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.cpu_label, self.cpu_bar = self._create_monitor_item("CPU")
-        self.memory_label, self.memory_bar = self._create_monitor_item("Memory")
+        self.memory_label, self.memory_bar = self._create_monitor_item(
+            "Memory"
+        )
         self.disk_label, self.disk_bar = self._create_monitor_item("Disk")
 
         self.network_title = QLabel("Network")
         self.network_title.setObjectName("itemLabel")
 
-        self.network_value = QLabel("↑ 0.00 MB/s    ↓ 0.00 MB/s")
+        self.network_value = QLabel(
+            "↑ 0.00 MB/s    ↓ 0.00 MB/s"
+        )
+        self.network_value.setObjectName("networkValue")
         self.network_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(title)
@@ -93,6 +98,10 @@ class MainWindow(QMainWindow):
         memory_usage = round(self.system_info.get_memory_usage())
         disk_usage = round(self.system_info.get_disk_usage())
 
+        upload_speed, download_speed = (
+            self.system_info.get_network_speed()
+        )
+
         self.cpu_label.setText(f"CPU  {cpu_usage}%")
         self.cpu_bar.setValue(cpu_usage)
 
@@ -101,6 +110,11 @@ class MainWindow(QMainWindow):
 
         self.disk_label.setText(f"Disk  {disk_usage}%")
         self.disk_bar.setValue(disk_usage)
+
+        self.network_value.setText(
+            f"↑ {upload_speed:.2f} MB/s    "
+            f"↓ {download_speed:.2f} MB/s"
+        )
 
     def _apply_style(self) -> None:
         self.setStyleSheet(
@@ -122,6 +136,14 @@ class MainWindow(QMainWindow):
                 font-size: 15px;
                 font-weight: 600;
                 margin-top: 10px;
+            }
+
+            QLabel#networkValue {
+                background-color: #20242c;
+                border: 1px solid #3a3f4b;
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 14px;
             }
 
             QProgressBar {
