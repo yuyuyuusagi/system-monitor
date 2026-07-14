@@ -1,5 +1,7 @@
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QProgressBar,
@@ -21,8 +23,8 @@ class MainWindow(QMainWindow):
         self.system_info = SystemInfo()
 
         self.setWindowTitle("System Monitor")
-        self.resize(360, 500)
-        self.setMinimumSize(320, 420)
+        self.resize(420, 620)
+        self.setMinimumSize(380, 560)
 
         self._apply_style()
         self._build_ui()
@@ -30,61 +32,116 @@ class MainWindow(QMainWindow):
 
     def _build_ui(self) -> None:
         central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(10)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(14)
 
         title = QLabel("System Monitor")
         title.setObjectName("title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.cpu_label, self.cpu_bar = self._create_monitor_item("CPU")
-        self.memory_label, self.memory_bar = self._create_monitor_item(
-            "Memory"
+        subtitle = QLabel("Realtime PC Status")
+        subtitle.setObjectName("subtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.cpu_label, self.cpu_bar, cpu_card = self._create_usage_card(
+            "CPU",
+            "Processor usage",
         )
-        self.disk_label, self.disk_bar = self._create_monitor_item("Disk")
 
-        self.network_title = QLabel("Network")
-        self.network_title.setObjectName("itemLabel")
-
-        self.network_value = QLabel(
-            "↑ 0.00 MB/s    ↓ 0.00 MB/s"
+        self.memory_label, self.memory_bar, memory_card = (
+            self._create_usage_card(
+                "Memory",
+                "System memory usage",
+            )
         )
-        self.network_value.setObjectName("networkValue")
-        self.network_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(title)
+        self.disk_label, self.disk_bar, disk_card = self._create_usage_card(
+            "Disk",
+            "System drive usage",
+        )
 
-        layout.addWidget(self.cpu_label)
-        layout.addWidget(self.cpu_bar)
+        self.network_value, network_card = self._create_network_card()
 
-        layout.addWidget(self.memory_label)
-        layout.addWidget(self.memory_bar)
-
-        layout.addWidget(self.disk_label)
-        layout.addWidget(self.disk_bar)
-
-        layout.addWidget(self.network_title)
-        layout.addWidget(self.network_value)
-
-        layout.addStretch()
+        main_layout.addWidget(title)
+        main_layout.addWidget(subtitle)
+        main_layout.addSpacing(8)
+        main_layout.addWidget(cpu_card)
+        main_layout.addWidget(memory_card)
+        main_layout.addWidget(disk_card)
+        main_layout.addWidget(network_card)
+        main_layout.addStretch()
 
         self.setCentralWidget(central_widget)
 
-    def _create_monitor_item(
+    def _create_usage_card(
         self,
-        name: str,
-    ) -> tuple[QLabel, QProgressBar]:
-        label = QLabel(f"{name}  0%")
-        label.setObjectName("itemLabel")
+        title_text: str,
+        description_text: str,
+    ) -> tuple[QLabel, QProgressBar, QFrame]:
+        card = QFrame()
+        card.setObjectName("card")
+
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(18, 16, 18, 16)
+        card_layout.setSpacing(10)
+
+        header_layout = QHBoxLayout()
+
+        title = QLabel(title_text)
+        title.setObjectName("cardTitle")
+
+        value_label = QLabel("0%")
+        value_label.setObjectName("cardValue")
+        value_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        description = QLabel(description_text)
+        description.setObjectName("cardDescription")
 
         progress_bar = QProgressBar()
         progress_bar.setRange(0, 100)
         progress_bar.setValue(0)
         progress_bar.setTextVisible(False)
 
-        return label, progress_bar
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+        header_layout.addWidget(value_label)
+
+        card_layout.addLayout(header_layout)
+        card_layout.addWidget(description)
+        card_layout.addWidget(progress_bar)
+
+        return value_label, progress_bar, card
+
+    def _create_network_card(self) -> tuple[QLabel, QFrame]:
+        card = QFrame()
+        card.setObjectName("card")
+
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(18, 16, 18, 16)
+        card_layout.setSpacing(10)
+
+        title = QLabel("Network")
+        title.setObjectName("cardTitle")
+
+        description = QLabel("Realtime upload and download speed")
+        description.setObjectName("cardDescription")
+
+        network_value = QLabel(
+            "↑ 0.00 MB/s    ↓ 0.00 MB/s"
+        )
+        network_value.setObjectName("networkValue")
+        network_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        card_layout.addWidget(title)
+        card_layout.addWidget(description)
+        card_layout.addWidget(network_value)
+
+        return network_value, card
 
     def _start_monitoring(self) -> None:
         self.timer = QTimer(self)
@@ -102,13 +159,13 @@ class MainWindow(QMainWindow):
             self.system_info.get_network_speed()
         )
 
-        self.cpu_label.setText(f"CPU  {cpu_usage}%")
+        self.cpu_label.setText(f"{cpu_usage}%")
         self.cpu_bar.setValue(cpu_usage)
 
-        self.memory_label.setText(f"Memory  {memory_usage}%")
+        self.memory_label.setText(f"{memory_usage}%")
         self.memory_bar.setValue(memory_usage)
 
-        self.disk_label.setText(f"Disk  {disk_usage}%")
+        self.disk_label.setText(f"{disk_usage}%")
         self.disk_bar.setValue(disk_usage)
 
         self.network_value.setText(
@@ -121,42 +178,64 @@ class MainWindow(QMainWindow):
             """
             QMainWindow,
             QWidget {
-                background-color: #111318;
-                color: white;
+                background-color: #0f1117;
+                color: #f5f7fa;
                 font-family: "Segoe UI";
             }
 
             QLabel#title {
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 12px;
+                font-size: 26px;
+                font-weight: 700;
             }
 
-            QLabel#itemLabel {
-                font-size: 15px;
-                font-weight: 600;
-                margin-top: 10px;
+            QLabel#subtitle {
+                color: #8f98a8;
+                font-size: 13px;
+                margin-bottom: 4px;
+            }
+
+            QFrame#card {
+                background-color: #191d26;
+                border: 1px solid #2a303d;
+                border-radius: 14px;
+            }
+
+            QLabel#cardTitle {
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            QLabel#cardValue {
+                font-size: 22px;
+                font-weight: 700;
+                color: #72a7ff;
+            }
+
+            QLabel#cardDescription {
+                color: #8f98a8;
+                font-size: 12px;
             }
 
             QLabel#networkValue {
-                background-color: #20242c;
-                border: 1px solid #3a3f4b;
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 14px;
+                background-color: #11151c;
+                border: 1px solid #2a303d;
+                border-radius: 9px;
+                padding: 12px;
+                font-size: 15px;
+                font-weight: 600;
             }
 
             QProgressBar {
-                border: 1px solid #3a3f4b;
-                border-radius: 6px;
-                background-color: #20242c;
-                min-height: 18px;
-                max-height: 18px;
+                background-color: #11151c;
+                border: none;
+                border-radius: 7px;
+                min-height: 14px;
+                max-height: 14px;
             }
 
             QProgressBar::chunk {
                 background-color: #4c8bf5;
-                border-radius: 5px;
+                border-radius: 7px;
             }
             """
         )
